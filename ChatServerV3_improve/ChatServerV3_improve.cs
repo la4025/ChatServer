@@ -73,7 +73,6 @@ class ChatServerV3_improve
         }
         catch (Exception ex)
         {
-
             Console.WriteLine($"[예외 발생] {ex.Message}");
         }
         finally
