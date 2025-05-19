@@ -36,6 +36,13 @@
   - V3의 모든 기능 포함
   - 추가적인 안정성 및 성능 개선
 
+- **ChatServerV4/ChatClientV4**: 최신 버전
+  - V3_improve의 모든 기능 포함
+  - 귓속말 기능 추가 (/w 명령어)
+  - 방 유저 목록 확인 기능 (/users 명령어)
+  - 자신의 닉네임 확인 기능 (/whoami 명령어)
+  - 명령어 시스템 개선 (/exit 명령어)
+
 ## 기술 스택
 - C# (.NET 9.0)
 - TCP/IP 소켓 프로그래밍
@@ -69,3 +76,39 @@
 5. 채팅방 시스템 도입
 6. 사용자 인터페이스 개선
 7. 안정성 및 성능 최적화
+
+## 프로젝트 타임라인
+### 2024년 1월
+- EchoServer/ChatClient 기본 구현
+- 단일 클라이언트 연결 지원
+
+### 2024년 2월
+- EchoServer_Multi/ChatClient 구현
+- 다중 클라이언트 지원 추가
+- EchoServer_Async 구현
+- 비동기 처리 도입
+
+### 2024년 3월
+- ChatServer/ChatClient V1 구현
+- 기본 채팅 기능 구현
+- ChatServer/ChatClient V2 구현
+- 다중 클라이언트 및 채팅방 기능 추가
+
+### 2024년 4월
+- ChatServer/ChatClient V3 구현
+- 다중 채팅방 및 닉네임 시스템 도입
+- ChatServer/ChatClient V3_improve 구현
+- 안정성 및 성능 개선
+
+### 2024년 5월
+- ChatServer/ChatClient V4 구현
+- 귓속말 기능 추가
+- 방 유저 목록 확인 기능 추가
+- 명령어 시스템 개선
+
+## 향후 계획
+1. 웹소켓 지원 추가
+2. 데이터베이스 연동
+3. 사용자 인증 시스템
+4. 채팅방 암호화
+5. 모바일 클라이언트 개발
