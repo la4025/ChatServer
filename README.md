@@ -36,9 +36,11 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
   - 입장/퇴장 메시지
   - 비동기 처리
 
-- **ChatServerV3_improve/ChatClientV3_improve**: 최종 개선 버전
+- **ChatServerV3_improve/ChatClientV3_improve**: ChatServerV3/ChatClientV3 개선 버전
   - V3의 모든 기능 포함
   - 추가적인 안정성 및 성능 개선
+  - 채팅방 간 채팅 구분 안되는 문제 해결
+  - 구분자를 사용하여 바이트 문자열 오류 해결
 
 - **ChatServerV4/ChatClientV4**: 최신 버전
   - V3_improve의 모든 기능 포함
@@ -82,25 +84,26 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
 7. 안정성 및 성능 최적화
 
 ## 프로젝트 타임라인
-### 2024년 1월
+
+### 2024년 3월
 - EchoServer/ChatClient 기본 구현
 - 단일 클라이언트 연결 지원
 
-### 2024년 2월
 - EchoServer_Multi/ChatClient 구현
 - 다중 클라이언트 지원 추가
 - EchoServer_Async 구현
 - 비동기 처리 도입
 
-### 2024년 3월
 - ChatServer/ChatClient V1 구현
 - 기본 채팅 기능 구현
+
 - ChatServer/ChatClient V2 구현
 - 다중 클라이언트 및 채팅방 기능 추가
 
 ### 2024년 4월
 - ChatServer/ChatClient V3 구현
 - 다중 채팅방 및 닉네임 시스템 도입
+
 - ChatServer/ChatClient V3_improve 구현
 - 안정성 및 성능 개선
 
