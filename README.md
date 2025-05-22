@@ -36,13 +36,13 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
   - 입장/퇴장 메시지
   - 비동기 처리
 
-- **ChatServerV3_improve/ChatClientV3_improve**: ChatServerV3/ChatClientV3 개선 버전
+- **ChatServerV3_improve/ChatClientV3_improve**: ChatServerV3/ChatClientV3 개선
   - V3의 모든 기능 포함
   - 추가적인 안정성 및 성능 개선
   - 채팅방 간 채팅 구분 안되는 문제 해결
   - 구분자를 사용하여 바이트 문자열 오류 해결
 
-- **ChatServerV4/ChatClientV4**: 최신 버전
+- **ChatServerV4/ChatClientV4**: 명령어 추가
   - V3_improve의 모든 기능 포함
   - 귓속말 기능 추가 (/w 명령어)
   - 방 유저 목록 확인 기능 (/users 명령어)
@@ -92,37 +92,40 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
 ## 프로젝트 타임라인
 
 ### 2024년 3월
-- EchoServer/ChatClient 기본 구현
+#### EchoServer/ChatClient 기본 구현
 - 단일 클라이언트 연결 지원
 
-- EchoServer_Multi/ChatClient 구현
+#### EchoServer_Multi/ChatClient 구현
 - 다중 클라이언트 지원 추가
-- EchoServer_Async 구현
+
+#### EchoServer_Async 구현
 - 비동기 처리 도입
 
-- ChatServer/ChatClient V1 구현
-- 기본 채팅 기능 구현
+#### ChatServer/ChatClient V1 구현
+- 기본 채팅 기능
 
-- ChatServer/ChatClient V2 구현
+#### ChatServer/ChatClient V2 구현
 - 다중 클라이언트 및 채팅방 기능 추가
 
 ### 2024년 4월
-- ChatServer/ChatClient V3 구현
+#### ChatServer/ChatClient V3 구현
 - 다중 채팅방 및 닉네임 시스템 도입
 
-- ChatServer/ChatClient V3_improve 구현
+#### ChatServer/ChatClient V3_improve 구현
 - 안정성 및 성능 개선
+- 채팅방 간 채팅 구분 안되는 문제 해결
+- 구분자를 사용하여 바이트 문자열 오류 해결
 
 ### 2024년 5월
-- ChatServer/ChatClient V4 구현
-- 귓속말 기능 추가
-- 방 유저 목록 확인 기능 추가
-- 명령어 시스템 개선
+#### ChatServer/ChatClient V4 구현
+- 명령어 시스템 개선 및 새로운 기능 추가
+- 귓속말 기능 추가 (/w 명령어)
+- 방 유저 목록 확인 기능 (/users 명령어)
+- 자신의 닉네임 확인 기능 (/whoami 명령어)
 
-- ChatServer/ChatClient V5 구현
+#### ChatServer/ChatClient V5 구현
 - 객체지향 설계 적용
-- 코드 구조 개선
-- 유지보수성 향상
+- ClientHandler 클래스를 통한 클라이언트 관리
 
 ## 향후 계획
 1. 웹소켓 지원 추가
