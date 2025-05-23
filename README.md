@@ -55,6 +55,13 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
   - 코드 구조 개선 및 유지보수성 향상
   - ClientHandler 클래스를 통한 클라이언트 관리
 
+- **ChatServerV6/ChatClientV6**: JSON 기반 메시지 시스템
+  - V5의 모든 기능 포함
+  - JSON 기반의 구조화된 메시지 시스템 도입
+  - 메시지 타입 구분 (chat, command, join)
+  - 더 안정적인 메시지 처리
+  - 확장 가능한 메시지 구조
+
 ## 기술 스택
 - C# (.NET 9.0)
 - TCP/IP 소켓 프로그래밍
@@ -126,6 +133,11 @@ ChatGPT 와 CURSOR AI를 활용하여 제작한 프로젝트입니다.
 #### ChatServer/ChatClient V5 구현
 - 객체지향 설계 적용
 - ClientHandler 클래스를 통한 클라이언트 관리
+
+#### ChatServer/ChatClient V6 구현
+- JSON 기반 메시지 시스템 도입
+- 구조화된 메시지 처리
+- 확장 가능한 메시지 구조 설계
 
 ## 향후 계획
 1. 웹소켓 지원 추가
