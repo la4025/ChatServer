@@ -187,6 +187,29 @@ class ClientHandler
                     await writer.WriteLineAsync("[시스템] 방에서 퇴장했습니다.");
                     return false;
                 }
+            case "list":
+                {
+                    List<string> roomNames;
+                    lock (ChatServerV7.lockObj)
+                    {
+                        roomNames = new List<string>(ChatServerV7.Rooms.Keys);
+                    }
+
+                    if (roomName.Count == 0)
+                    {
+                        await writer.WriteLineAsync("[시스템] 현재 생성된 채팅방이 없습니다.");
+                    }
+                    else
+                    {
+                        await writer.WriteLineAsync("[시스템] 현재 채팅방 목록 : ");
+                        foreach (var room in roomName)
+                        {
+                            await writer.WriteLineAsync(" - " + room);
+                        }
+                    }
+
+                    return false;
+                }
             default:
                 {
                     if (msg.Command!.StartsWith("/w "))
