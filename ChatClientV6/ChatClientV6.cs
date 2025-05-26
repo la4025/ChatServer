@@ -133,6 +133,10 @@ class ChatClientV6
         {
             Console.WriteLine($"[수신 오류] {ex.Message}");
         }
+        finally
+        {
+            Environment.Exit(0);
+        }
     }
 }
 

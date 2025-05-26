@@ -18,10 +18,10 @@ public class ChatMessage
 }
 
 /// <summary>
-/// ChatServerV6
-/// JSON 기반 메시지 시스템 적용
+/// ChatServerV7
+/// /create, /join, /leave 명령어 구현
 /// </summary>
-class ChatServerV6
+class ChatServerV7
 {
     public static Dictionary<string, List<TcpClient>> Rooms = new();
     public static Dictionary<TcpClient, string> clientNames = new();
@@ -81,16 +81,16 @@ class ClientHandler
             roomName = helloMsg.Room;
 
             // 딕셔너리에 등록
-            lock (ChatServerV6.lockObj)
+            lock (ChatServerV7.lockObj)
             {
-                if (!ChatServerV6.Rooms.ContainsKey(roomName))
+                if (!ChatServerV7.Rooms.ContainsKey(roomName))
                 {
-                    ChatServerV6.Rooms[roomName] = new List<TcpClient>();
+                    ChatServerV7.Rooms[roomName] = new List<TcpClient>();
                 }
 
-                ChatServerV6.Rooms[roomName].Add(client);
-                ChatServerV6.clientNames[client] = nickname;
-                ChatServerV6.clientRooms[client] = roomName;
+                ChatServerV7.Rooms[roomName].Add(client);
+                ChatServerV7.clientNames[client] = nickname;
+                ChatServerV7.clientRooms[client] = roomName;
             }
 
             Console.WriteLine($"[입장] {nickname} -> {roomName}");
@@ -136,11 +136,11 @@ class ClientHandler
         }
         finally
         {
-            lock (ChatServerV6.lockObj)
+            lock (ChatServerV7.lockObj)
             {
-                ChatServerV6.Rooms[roomName].Remove(client);
-                ChatServerV6.clientNames.Remove(client);
-                ChatServerV6.clientRooms.Remove(client);
+                ChatServerV7.Rooms[roomName].Remove(client);
+                ChatServerV7.clientNames.Remove(client);
+                ChatServerV7.clientRooms.Remove(client);
             }
 
             Console.WriteLine($"[퇴장] {nickname} <- {roomName}");
@@ -166,11 +166,11 @@ class ClientHandler
             case "/users":
                 {
                     List<string> users = new();
-                    lock (ChatServerV6.lockObj)
+                    lock (ChatServerV7.lockObj)
                     {
-                        foreach (var c in ChatServerV6.Rooms[roomName])
+                        foreach (var c in ChatServerV7.Rooms[roomName])
                         {
-                            if (ChatServerV6.clientNames.TryGetValue(c, out var name))
+                            if (ChatServerV7.clientNames.TryGetValue(c, out var name))
                             {
                                 users.Add(name);
                             }
@@ -178,6 +178,13 @@ class ClientHandler
                     }
 
                     await writer.WriteLineAsync($"현재 방 유저 : {string.Join(", ", users)}");
+                    return false;
+                }
+            case "/leave":
+                {
+                    await LeaveRoom();
+                    Console.WriteLine($"[퇴장] {nickname} <- {roomName}");
+                    await writer.WriteLineAsync("[시스템] 방에서 퇴장했습니다.");
                     return false;
                 }
             default:
@@ -196,9 +203,9 @@ class ClientHandler
                         string whisperMsg = tokens[2];
                         TcpClient? targetClient = null;
 
-                        lock (ChatServerV6.lockObj)
+                        lock (ChatServerV7.lockObj)
                         {
-                            foreach (var kvp in ChatServerV6.clientNames)
+                            foreach (var kvp in ChatServerV7.clientNames)
                             {
                                 if (kvp.Value == targetName)
                                 {
@@ -220,17 +227,103 @@ class ClientHandler
                         }
                         return false;
                     }
+                    else if (msg.Command!.StartsWith("/create "))
+                    {
+                        string[] tokens = msg.Command.Split(' ', 2);
+                        bool isExist;
+
+                        if (tokens.Length < 2)
+                        {
+                            await writer.WriteLineAsync("[시스템] 사용법 : /create 방제목");
+                            return false;
+                        }
+
+                        string newRoom = tokens[1];
+
+                        lock (ChatServerV7.lockObj)
+                        {
+                            isExist = ChatServerV7.Rooms.ContainsKey(newRoom);
+                        }
+
+                        if (isExist)
+                        {
+                            await writer.WriteLineAsync("[시스템] 이미 존재하는 방입니다.");
+                            return false;
+                        }
+
+                        ChatServerV7.Rooms[newRoom] = new List<TcpClient>();
+                    }
+                    else if (msg.Command!.StartsWith("/join "))
+                    {
+                        string[] tokens = msg.Command.Split(' ', 2);
+                        bool isExist;
+
+                        if (tokens.Length < 2)
+                        {
+                            await writer.WriteLineAsync("[시스템] 사용법 : /join 방제목");
+                            return false;
+                        }
+
+                        string targetRoom = tokens[1];
+
+                        lock (ChatServerV7.lockObj)
+                        {
+                            isExist = ChatServerV7.Rooms.ContainsKey(targetRoom);
+                        }
+
+                        if (isExist)
+                        {
+                            await writer.WriteLineAsync("[시스템] 존재하지 않는 방입니다.");
+                            return false;
+                        }
+
+                        await MoveToRoom(targetRoom);
+                        await writer.WriteLineAsync($"[시스템] '{targetRoom}' 방에 입장했습니다.");
+                        return false;
+                    }
                     return false;
                 }
+        }
+    }
+
+    private async Task MoveToRoom(string newRoom)
+    {
+        await LeaveRoom();
+
+        lock (ChatServerV7.lockObj)
+        {
+            ChatServerV7.Rooms[newRoom].Add(client);
+            ChatServerV7.clientRooms[client] = newRoom;
+            roomName = newRoom;
+        }
+
+        Console.WriteLine($"[입장] {nickname} -> {roomName}");
+        await BroadCastToRoom($"● [{nickname}]님이 채팅창 [{roomName}]에 입장했습니다.");
+    }
+
+    private async Task LeaveRoom()
+    {
+        lock (ChatServerV7.lockObj)
+        {
+            if (!string.IsNullOrEmpty(roomName) && ChatServerV7.Rooms.ContainsKey(roomName))
+            {
+                ChatServerV7.Rooms[roomName].Remove(client);
+
+                if (ChatServerV7.Rooms[roomName].Count == 0)
+                {
+                    ChatServerV7.Rooms.Remove(roomName);
+                }
+                ChatServerV7.clientRooms.Remove(client);
+            }
         }
     }
 
 
     private async Task BroadCastToRoom(string message)
     {
-        lock (ChatServerV6.lockObj)
+        lock (ChatServerV7.lockObj)
         {
-            foreach (var c in ChatServerV6.Rooms[roomName])
+            foreach (var c in ChatServerV7.Rooms[roomName])
             {
                 if (c == client)
                 {
