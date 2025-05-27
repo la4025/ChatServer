@@ -18,10 +18,12 @@ public class ChatMessage
 }
 
 /// <summary>
-/// ChatServerV7
-/// /create, /join, /leave 명령어 구현
+/// ChatServerV8
+/// DB 연동
+/// 닉네임, 방 이름, 메시지, 시간 저장
+/// /history 명령어 추가. 해당 방의 최근 10개 메시지 불러오기 가능.
 /// </summary>
-class ChatServerV7
+class ChatServerV8
 {
     public static Dictionary<string, List<TcpClient>> Rooms = new();
     public static Dictionary<TcpClient, string> clientNames = new();
@@ -80,17 +82,20 @@ class ClientHandler
             nickname = helloMsg.Nickname;
             roomName = helloMsg.Room;
 
+            // 닉네임, 방이름 DB 저장
+            Database.InsertLoginLog(nickname, roomName);
+
             // 딕셔너리에 등록
-            lock (ChatServerV7.lockObj)
+            lock (ChatServerV8.lockObj)
             {
-                if (!ChatServerV7.Rooms.ContainsKey(roomName))
+                if (!ChatServerV8.Rooms.ContainsKey(roomName))
                 {
-                    ChatServerV7.Rooms[roomName] = new List<TcpClient>();
+                    ChatServerV8.Rooms[roomName] = new List<TcpClient>();
                 }
 
-                ChatServerV7.Rooms[roomName].Add(client);
-                ChatServerV7.clientNames[client] = nickname;
-                ChatServerV7.clientRooms[client] = roomName;
+                ChatServerV8.Rooms[roomName].Add(client);
+                ChatServerV8.clientNames[client] = nickname;
+                ChatServerV8.clientRooms[client] = roomName;
             }
 
             Console.WriteLine($"[입장] {nickname} -> {roomName}");
@@ -124,6 +129,9 @@ class ClientHandler
                 }
                 else if (msg.Type == "chat" && msg.Message != null)
                 {
+                    // 채팅 DB 저장
+                    Database.InsertChatLog(nickname, roomName, msg.Message);
+
                     // 일반 채팅 메시지
                     Console.WriteLine($"[수신] [{roomName}] {nickname} : {msg.Message}");
                     await BroadCastToRoom($"[{nickname}] : {msg.Message}");
@@ -136,11 +144,11 @@ class ClientHandler
         }
         finally
         {
-            lock (ChatServerV7.lockObj)
+            lock (ChatServerV8.lockObj)
             {
-                ChatServerV7.Rooms[roomName].Remove(client);
-                ChatServerV7.clientNames.Remove(client);
-                ChatServerV7.clientRooms.Remove(client);
+                ChatServerV8.Rooms[roomName].Remove(client);
+                ChatServerV8.clientNames.Remove(client);
+                ChatServerV8.clientRooms.Remove(client);
             }
 
             Console.WriteLine($"[퇴장] {nickname} <- {roomName}");
@@ -166,11 +174,11 @@ class ClientHandler
             case "/users":
                 {
                     List<string> users = new();
-                    lock (ChatServerV7.lockObj)
+                    lock (ChatServerV8.lockObj)
                     {
-                        foreach (var c in ChatServerV7.Rooms[roomName])
+                        foreach (var c in ChatServerV8.Rooms[roomName])
                         {
-                            if (ChatServerV7.clientNames.TryGetValue(c, out var name))
+                            if (ChatServerV8.clientNames.TryGetValue(c, out var name))
                             {
                                 users.Add(name);
                             }
@@ -190,12 +198,12 @@ class ClientHandler
             case "/list":
                 {
                     List<string> roomNames;
-                    lock (ChatServerV7.lockObj)
+                    lock (ChatServerV8.lockObj)
                     {
-                        roomNames = new List<string>(ChatServerV7.Rooms.Keys);
+                        roomNames = new List<string>(ChatServerV8.Rooms.Keys);
                     }
 
-                    if (roomName.Count == 0)
+                    if (roomNames.Count == 0)
                     {
                         await writer.WriteLineAsync("[시스템] 현재 생성된 채팅방이 없습니다.");
                     }
@@ -206,6 +214,19 @@ class ClientHandler
                         {
                             await writer.WriteLineAsync(" - " + room);
                         }
+                    }
+
+                    return false;
+                }
+            case "/history":
+                {
+                    var logs = Database.GetRecentChagLogs(roomName);
+                    await writer.WriteLineAsync("[시스템] 최근 채팅 로그 : ");
+
+                    // 역순으로 출력하기 위해 LINQ 사용
+                    foreach (var log in logs.AsEnumerable().Reverse())
+                    {
+                        await writer.WriteLineAsync(" - " + log);
                     }
 
                     return false;
@@ -226,9 +247,9 @@ class ClientHandler
                         string whisperMsg = tokens[2];
                         TcpClient? targetClient = null;
 
-                        lock (ChatServerV7.lockObj)
+                        lock (ChatServerV8.lockObj)
                         {
-                            foreach (var kvp in ChatServerV7.clientNames)
+                            foreach (var kvp in ChatServerV8.clientNames)
                             {
                                 if (kvp.Value == targetName)
                                 {
@@ -263,9 +284,9 @@ class ClientHandler
 
                         string newRoom = tokens[1];
 
-                        lock (ChatServerV7.lockObj)
+                        lock (ChatServerV8.lockObj)
                         {
-                            isExist = ChatServerV7.Rooms.ContainsKey(newRoom);
+                            isExist = ChatServerV8.Rooms.ContainsKey(newRoom);
                         }
 
                         if (isExist)
@@ -274,7 +295,7 @@ class ClientHandler
                             return false;
                         }
 
-                        ChatServerV7.Rooms[newRoom] = new List<TcpClient>();
+                        ChatServerV8.Rooms[newRoom] = new List<TcpClient>();
                     }
                     else if (msg.Command!.StartsWith("/join "))
                     {
@@ -289,9 +310,9 @@ class ClientHandler
 
                         string targetRoom = tokens[1];
 
-                        lock (ChatServerV7.lockObj)
+                        lock (ChatServerV8.lockObj)
                         {
-                            isExist = ChatServerV7.Rooms.ContainsKey(targetRoom);
+                            isExist = ChatServerV8.Rooms.ContainsKey(targetRoom);
                         }
 
                         if (isExist)
@@ -313,10 +334,10 @@ class ClientHandler
     {
         await LeaveRoom();
 
-        lock (ChatServerV7.lockObj)
+        lock (ChatServerV8.lockObj)
         {
-            ChatServerV7.Rooms[newRoom].Add(client);
-            ChatServerV7.clientRooms[client] = newRoom;
+            ChatServerV8.Rooms[newRoom].Add(client);
+            ChatServerV8.clientRooms[client] = newRoom;
             roomName = newRoom;
         }
 
@@ -326,17 +347,17 @@ class ClientHandler
 
     private async Task LeaveRoom()
     {
-        lock (ChatServerV7.lockObj)
+        lock (ChatServerV8.lockObj)
         {
-            if (!string.IsNullOrEmpty(roomName) && ChatServerV7.Rooms.ContainsKey(roomName))
+            if (!string.IsNullOrEmpty(roomName) && ChatServerV8.Rooms.ContainsKey(roomName))
             {
-                ChatServerV7.Rooms[roomName].Remove(client);
+                ChatServerV8.Rooms[roomName].Remove(client);
 
-                if (ChatServerV7.Rooms[roomName].Count == 0)
+                if (ChatServerV8.Rooms[roomName].Count == 0)
                 {
-                    ChatServerV7.Rooms.Remove(roomName);
+                    ChatServerV8.Rooms.Remove(roomName);
                 }
-                ChatServerV7.clientRooms.Remove(client);
+                ChatServerV8.clientRooms.Remove(client);
             }
         }
     }
@@ -344,9 +365,9 @@ class ClientHandler
 
     private async Task BroadCastToRoom(string message)
     {
-        lock (ChatServerV7.lockObj)
+        lock (ChatServerV8.lockObj)
         {
-            foreach (var c in ChatServerV7.Rooms[roomName])
+            foreach (var c in ChatServerV8.Rooms[roomName])
             {
                 if (c == client)
                 {
